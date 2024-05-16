@@ -1,0 +1,33 @@
+sum_sq_fibo
+
+C++ Code
+----------------------------------
+
+#include<bits/stdc++.h>
+
+using namespace std;
+
+long long square_fibo_sum(long long n)
+{
+    if (n <= 1)
+        return n;
+    long long prev = 0, cur = 1, temp, i;
+    n = n % 60;
+    for (i = 0; i <n; i++)
+    {
+        temp = cur;
+        cur = (cur+prev)%10;
+        prev = temp;
+    }
+    long long sum = (cur * prev)%10;
+    return sum;
+}
+
+int main()
+{
+    long long n;
+    cin >> n;
+    long long res = square_fibo_sum(n);
+    cout << res%10 << endl;
+    return 0;
+}
