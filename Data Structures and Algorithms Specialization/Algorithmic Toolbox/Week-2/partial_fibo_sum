@@ -1,0 +1,40 @@
+partial_fibo_sum
+
+C++ Code
+----------------------------------
+
+
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+long long partial_fibo_sum(long long from, long to)
+{
+    long long sum = 0,i,prev=0,cur=1,temp;
+    from = from % 60;
+    to = to % 60;
+
+    if(from>to)
+        to += 60;
+
+    for (i = 0;i <= to;i++)
+    {
+        if (i >= from)
+            sum += prev;
+        temp = cur;
+        cur += prev;
+        prev = temp;
+
+    }
+    return sum%10;
+}
+
+int main()
+{
+    long long from,to;
+    cin >> from>>to;
+    long long res = partial_fibo_sum(from,to);
+    cout << res<< endl;
+    return 0;
+}
