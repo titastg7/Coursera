@@ -1,0 +1,51 @@
+huge_fibo
+
+C++ Code
+----------------------------------
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+long long pisano_period(long long m)
+{
+    int l=1, prevR = 0, curR = 1;  // current remainder
+
+    while (true)
+    {
+        int tmpPreviousR = prevR;
+        prevR = curR;
+        curR = (tmpPreviousR + curR) % m;
+        if (prevR == 0 && curR == 1)
+            break;
+        l++;
+    }
+
+    return l;
+}
+
+long long huge_fibo(long long n, long long m)
+{
+    long long rem = n % pisano_period(m);
+
+    long long first = 0, second = 1;
+
+    long long res = rem;
+
+    for (int i = 1; i < rem; i++)
+    {
+        res = (first + second) % m;
+        first = second;
+        second = res;
+    }
+
+    return res % m;
+}
+int main()
+{
+    long long m, n;
+    cin >> n >> m;
+    long long res = huge_fibo(n, m);
+    cout << res << endl;
+    return 0;
+}
