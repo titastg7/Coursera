@@ -1,0 +1,33 @@
+last_digit_sum_fibo
+
+C++ Code
+----------------------------------
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+long long sum_fibo(long long n)
+{
+    if(n<=1)
+        return n;
+    long long prev = 0, cur = 1, temp, i;
+    long long sum = 1;
+    n = n % 60;
+    for (i = 0; i <= n; i++)
+    {
+        temp = (cur + prev) % 10;
+        prev = cur%10;
+        cur = temp;
+    }
+    return (cur != 0 ? cur - 1 : 9);
+}
+
+int main()
+{
+    long long n;
+    cin >> n;
+    long long res = sum_fibo(n);
+    cout <<res%10<< endl;
+    return 0;
+}
