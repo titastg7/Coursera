@@ -1,0 +1,37 @@
+largest_number
+
+
+C++ Code
+----------------------------------
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+string largest_number(vector<string> a)
+{
+  int n = a.size(), i;
+  sort(a.begin(), a.end(),
+       [](const string &x, const string &y)
+       {
+         return (x + y) > (y + x);
+       });
+  string res;
+  for (i = 0; i < n; i++)
+    res += a[i];
+  if (res[0] == '0')
+    return "0";
+  return res;
+}
+
+int main()
+{
+  int n;
+  std::cin >> n;
+  vector<string> a(n);
+  for (size_t i = 0; i < a.size(); i++)
+  {
+    std::cin >> a[i];
+  }
+  std::cout << largest_number(a);
+}
