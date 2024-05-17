@@ -1,0 +1,64 @@
+jobScheduling
+
+
+C++ Code
+----------------------------------
+
+#include <bits/stdc++.h>
+
+using namespace std;
+typedef long long ll;
+typedef pair<ll, ll> ii;
+
+ll scheduleJobs(ll n, vector<ll> &profit, vector<ll> &deadline)
+{
+    ll i, res = 0;
+    priority_queue<ii> scheduler;
+    for (i = 0; i < n; i++)
+    {
+        scheduler.push({profit[i], deadline[i]});
+    }
+    unordered_map<ll, ll> jobs;
+    while (!scheduler.empty())
+    {
+        ii currentJob = scheduler.top();
+        scheduler.pop();
+        if (jobs.find(currentJob.second) == jobs.end())
+            jobs[currentJob.second] = currentJob.first;
+        else
+        {
+            i = currentJob.second;
+            while (i >= 0)
+            {
+                if (jobs.find(i) == jobs.end())
+                {
+                    jobs[i] = currentJob.first;
+                    break;
+                }
+                i--;
+            }
+        }
+    }
+
+    for (auto e : jobs)
+    {
+        res += e.second;
+        cout << e.first << "=>" << e.second << " ";
+    }
+    return res;
+}
+
+int main()
+{
+    ll i, n;
+    cin >> n;
+    vector<ll> profit(n), deadline(n);
+    for (i = 0; i < n; i++)
+    {
+        cin >> profit[i];
+        cin >> deadline[i];
+    }
+
+    cout << "\nTotal profit = " << scheduleJobs(n, profit, deadline) << endl;
+    return 0;
+}
