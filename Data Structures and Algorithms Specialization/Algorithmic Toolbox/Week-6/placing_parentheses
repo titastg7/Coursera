@@ -1,0 +1,73 @@
+placing_parentheses
+
+C++ Code
+----------------------------------
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+long long eval(long long a, long long b, char op)
+{
+  if (op == '*')
+  {
+    return a * b;
+  }
+  else if (op == '+')
+  {
+    return a + b;
+  }
+  else if (op == '-')
+  {
+    return a - b;
+  }
+  else
+  {
+    assert(0);
+  }
+}
+
+long long get_maximum_value(const string &exp)
+{
+
+  long long s, minVal, maxVal, i, j, k, t1, t2, t3, t4, len = exp.length(), n;
+  n = (len + 1) / 2;
+  vector<vector<long long>> minMemo(n, vector<long long>(n, 0));
+  vector<vector<long long>> maxMemo(n, vector<long long>(n, 0));
+
+  for (i = 0; i < n; i++)
+  {
+    minMemo[i][i] = (exp[2 * i]) - '0';
+    maxMemo[i][i] = (exp[2 * i]) - '0';
+  }
+
+  for (s = 0; s < n - 1; s++)
+  {
+    for (i = 0; i < n - s - 1; i++)
+    {
+      j = i + s + 1;
+      minVal = LLONG_MAX;
+      maxVal = LLONG_MIN;
+      for (k = i; k < j; k++)
+      {
+        t1 = eval(maxMemo[i][k], maxMemo[k + 1][j], exp[2 * k + 1]);
+        t2 = eval(maxMemo[i][k], minMemo[k + 1][j], exp[2 * k + 1]);
+        t3 = eval(minMemo[i][k], maxMemo[k + 1][j], exp[2 * k + 1]);
+        t4 = eval(minMemo[i][k], minMemo[k + 1][j], exp[2 * k + 1]);
+
+        minVal = min(minVal, min(t1, min(t2, min(t3, t4))));
+        maxVal = max(maxVal, max(t1, max(t2, max(t3, t4))));
+      }
+      maxMemo[i][j] = maxVal;
+      minMemo[i][j] = minVal;
+    }
+  }
+  return maxMemo[0][n - 1];
+}
+
+int main()
+{
+  string s;
+  std::cin >> s;
+  std::cout << get_maximum_value(s) << '\n';
+}
