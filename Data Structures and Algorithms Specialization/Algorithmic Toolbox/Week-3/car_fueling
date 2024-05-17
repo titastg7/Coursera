@@ -1,0 +1,60 @@
+car_fueling
+
+C++ Code
+----------------------------------
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int compute_min_refills(int dist, int tank, vector<int> &stops)
+{
+    int n = stops.size(), i, res = 0, currentGas = tank, nextDist, currentDist;
+    if (n == 0)
+        return res;
+    if (stops[0] > tank)
+        return -1;
+    currentDist = stops[0];
+    for (i = 0; i < n; i++)
+    {
+        currentGas -= currentDist;
+        // cout<<" i= "<<i<<" => CG = "<<currentGas;
+        if (i == n - 1)
+            nextDist = dist - stops[i];
+        else
+            nextDist = stops[i + 1] - stops[i];
+        // cout<<" ND = "<<nextDist<<" ";
+        if (currentGas <= nextDist)
+        {
+            if ((currentGas + tank) <= nextDist)
+            {
+                //    cout<<" T1 = "<<i<<" ";
+                return -1;
+            }
+            currentGas += tank;
+            //  cout<<" T2  CG = "<<currentGas;
+            res++;
+        }
+        currentDist = nextDist;
+        // cout<<" CD = "<<currentDist<<endl;
+    }
+    return res;
+}
+
+int main()
+{
+    int d = 0;
+    cin >> d;
+    int m = 0;
+    cin >> m;
+    int n = 0;
+    cin >> n;
+
+    vector<int> stops(n);
+    for (size_t i = 0; i < n; ++i)
+        cin >> stops.at(i);
+
+    cout << compute_min_refills(d, m, stops) << "\n";
+
+    return 0;
+}
