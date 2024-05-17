@@ -1,0 +1,41 @@
+different_summands
+
+C++ Code
+----------------------------------
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+vector<int> optimal_summands(int n)
+{
+  vector<int> summands;
+  int i, k;
+  for (k = n, i = 1; k > 0; i++)
+  {
+    if (k <= (2 * i))
+    {
+      summands.push_back(k);
+      break;
+    }
+    else
+    {
+      summands.push_back(i);
+      k -= i;
+    }
+  }
+
+  return summands;
+}
+
+int main()
+{
+  int n;
+  std::cin >> n;
+  vector<int> summands = optimal_summands(n);
+  std::cout << summands.size() << '\n';
+  for (size_t i = 0; i < summands.size(); ++i)
+  {
+    std::cout << summands[i] << ' ';
+  }
+}
