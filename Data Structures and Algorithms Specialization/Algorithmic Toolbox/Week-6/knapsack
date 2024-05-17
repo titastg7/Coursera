@@ -1,0 +1,63 @@
+knapsack
+
+C++ Code
+----------------------------------
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int findMaxWeight(const vector<int> &weights, int ind, int W, vector<vector<int>> *memo)
+{
+  if (W == 0 || ind < 0)
+    return 0;
+  if ((*memo)[W][ind] != -1)
+    return (*memo)[W][ind];
+  int t1 = findMaxWeight(weights, ind - 1, W, memo);
+  int t2 = 0;
+  if (W >= weights[ind])
+    t2 = weights[ind] + findMaxWeight(weights, ind - 1, W - weights[ind], memo);
+  (*memo)[W][ind] = max(t1, t2);
+  return (*memo)[W][ind];
+}
+
+int optimal_weight(int W, const vector<int> &w)
+{
+  int current_weight = 0, n = w.size(), i, j;
+
+  /*
+    Top-Down Approach
+      vector<vector<int>> memo(W+1,vector<int>(n,-1));
+
+      current_weight= findMaxWeight(w,n-1,W,&memo);
+
+      return current_weight;
+  */
+
+  // Bottom-Up Approach
+  vector<vector<int>> memo(W + 1, vector<int>(n + 1, 0));
+
+  for (i = 1; i <= W; i++)
+  {
+    for (j = 1; j <= n; j++)
+    {
+      memo[i][j] = memo[i][j - 1];
+      if (i >= w[j - 1])
+        memo[i][j] = max(memo[i][j], w[j - 1] + memo[i - w[j - 1]][j - 1]);
+    }
+  }
+
+  return memo[W][n];
+}
+
+int main()
+{
+  int n, W;
+  std::cin >> W >> n;
+  vector<int> w(n);
+  for (int i = 0; i < n; i++)
+  {
+    std::cin >> w[i];
+  }
+  std::cout << optimal_weight(W, w) << '\n';
+}
