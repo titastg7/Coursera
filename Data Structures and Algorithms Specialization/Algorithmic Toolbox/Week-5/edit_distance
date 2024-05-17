@@ -1,0 +1,42 @@
+edit_distance
+
+C++ Code
+----------------------------------
+
+#include <bits/stdc++.h>
+
+using namespace std;
+#define inf 99999
+
+int edit_distance(const string &str1, const string &str2)
+{
+  int t1 = str1.length(), t2 = str2.length(), i, j;
+  vector<vector<int>> memo(t1 + 1, vector<int>(t2 + 1, inf));
+  memo[0][0] = 0;
+  for (i = 0; i <= t1; i++)
+  {
+    for (j = 0; j <= t2; j++)
+    {
+      if (i == 0)
+        memo[i][j] = j;
+      else if (j == 0)
+        memo[i][j] = i;
+      else if (str1[i - 1] == str2[j - 1])
+        memo[i][j] = memo[i - 1][j - 1];
+      else
+      {
+        memo[i][j] = 1 + min(memo[i - 1][j], min(memo[i][j - 1], memo[i - 1][j - 1]));
+      }
+    }
+  }
+  return memo[t1][t2];
+}
+
+int main()
+{
+  string str1;
+  string str2;
+  std::cin >> str1 >> str2;
+  std::cout << edit_distance(str1, str2) << std::endl;
+  return 0;
+}
