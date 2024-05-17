@@ -1,0 +1,62 @@
+majority_element
+
+C++ Code
+----------------------------------
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+bool isMajority(vector<int> &a, int n, int element)
+{
+  int count = 0;
+  for (int i = 0; i < n; i++)
+
+    if (a[i] == element)
+      count++;
+
+  if (count > n / 2)
+    return 1;
+
+  else
+    return 0;
+}
+
+int get_majority_element(vector<int> &a, int left, int right)
+{
+  if (left == right)
+    return -1;
+  if (left + 1 == right)
+    return a[left];
+
+  // Using Moore Voting Algorithm, Time Complexity - O(n), Space Complexity - O(1)
+  int i, maxElement = a[left], voting = 1;
+  for (i = 1; i < right; i++)
+  {
+    if (a[i] == maxElement)
+      voting++;
+    else
+    {
+      voting--;
+      if (voting == 0)
+      {
+        maxElement = a[i];
+        voting = 1;
+      }
+    }
+  }
+
+  return isMajority(a, right, maxElement) ? maxElement : -1;
+}
+
+int main()
+{
+  int n;
+  std::cin >> n;
+  vector<int> a(n);
+  for (size_t i = 0; i < a.size(); ++i)
+  {
+    std::cin >> a[i];
+  }
+  std::cout << (get_majority_element(a, 0, a.size()) != -1) << '\n';
+}
