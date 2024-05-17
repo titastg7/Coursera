@@ -1,0 +1,68 @@
+lcs3
+
+C++ Code
+----------------------------------
+
+#include <bits/stdc++.h>
+
+using namespace std;
+vector<int> x = {0, 0, 0, -1, -1, -1, -1};
+vector<int> y = {0, -1, -1, 0, 0, -1, -1};
+vector<int> z = {-1, 0, -1, 0, -1, 0, -1};
+
+int lcs3(vector<int> &a, vector<int> &b, vector<int> &c)
+{
+  int t1 = a.size(), t2 = b.size(), t3 = c.size(), i, j, k;
+
+  vector<vector<vector<int>>> memo(t1 + 1, vector<vector<int>>(t2 + 1, vector<int>(t3 + 1, -1)));
+
+  for (i = 0; i <= t1; i++)
+  {
+    for (j = 0; j <= t2; j++)
+    {
+      for (k = 0; k <= t3; k++)
+      {
+        if (i == 0 || j == 0 || k == 0)
+          memo[i][j][k] = 0;
+        else if (a[i - 1] == b[j - 1] && a[i - 1] == c[k - 1])
+          memo[i][j][k] = 1 + memo[i - 1][j - 1][k - 1];
+        else
+        {
+          int l, res = -1;
+          for (l = 0; l < 7; l++)
+          {
+            res = max(res, memo[i + x[l]][j + y[l]][k + z[l]]);
+          }
+          memo[i][j][k] = res;
+        }
+      }
+    }
+  }
+  return memo[t1][t2][t3];
+}
+
+int main()
+{
+  size_t an;
+  std::cin >> an;
+  vector<int> a(an);
+  for (size_t i = 0; i < an; i++)
+  {
+    std::cin >> a[i];
+  }
+  size_t bn;
+  std::cin >> bn;
+  vector<int> b(bn);
+  for (size_t i = 0; i < bn; i++)
+  {
+    std::cin >> b[i];
+  }
+  size_t cn;
+  std::cin >> cn;
+  vector<int> c(cn);
+  for (size_t i = 0; i < cn; i++)
+  {
+    std::cin >> c[i];
+  }
+  std::cout << lcs3(a, b, c) << std::endl;
+}
