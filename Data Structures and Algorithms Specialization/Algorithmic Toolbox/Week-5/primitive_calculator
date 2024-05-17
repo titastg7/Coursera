@@ -1,0 +1,74 @@
+primitive_calculator
+
+C++ Code
+----------------------------------
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+vector<int> optimal_sequence(int n)
+{
+  std::vector<int> sequence;
+
+  // Bottom-Up
+  vector<int> memo(n + 1, INT_MAX / 6), path(n + 1);
+  // Path is to store the direction of the recursion, 0-> +1, 1->*2, 2 -> *3
+
+  int i;
+  memo[1] = 1;
+  for (i = 2; i <= n; i++)
+  {
+    int t1 = INT_MAX / 6, t2 = INT_MAX / 6, t3 = INT_MAX / 6;
+    if ((i - 1) >= 0)
+      t1 = 1 + memo[i - 1];
+    if ((i % 2) == 0 && i / 2 >= 0)
+      t2 = 1 + memo[i / 2];
+    if (i % 3 == 0 && i / 3 >= 0)
+      t3 = 1 + memo[i / 3];
+    memo[i] = min(t1, min(t2, t3));
+    if (memo[i] == t1)
+      path[i] = 0;
+    else if (memo[i] == t2)
+      path[i] = 1;
+    else
+      path[i] = 2;
+  }
+
+  i = n;
+  while (i >= 1)
+  {
+    sequence.push_back(i);
+    // cout<<" i = "<<i;
+    if (path[i] == 0)
+    {
+      i = i - 1;
+      // cout<<" 0 ";
+    }
+    else if (path[i] == 1)
+    {
+      i = i / 2;
+      // cout<<" 1 ";
+    }
+    else
+    {
+      i = i / 3;
+      // cout<<" 2 ";
+    }
+  }
+  // cout<<endl;
+  reverse(sequence.begin(), sequence.end());
+  return sequence;
+}
+
+int main()
+{
+  int n;
+  std::cin >> n;
+  vector<int> sequence = optimal_sequence(n);
+  std::cout << sequence.size() - 1 << std::endl;
+  for (size_t i = 0; i < sequence.size(); ++i)
+  {
+    std::cout << sequence[i] << " ";
+  }
+}
