@@ -181,7 +181,7 @@ class SingleOrderView(generics.RetrieveUpdateDestroyAPIView):
         
         elif current_user.groups.filter(name='DeliveryCrew').exists():
             # Delivery crew can only update the status
-            if 'status' in request.data:
+            if 'status' in request.data and len(request.data) == 1:
                 status_value = request.data['status']
                 if status_value == 1 and order.delivery_crew is None:
                     raise PermissionDenied("Order cannot be marked as delivered without an assigned delivery crew.")
@@ -240,7 +240,6 @@ class OrderView(generics.ListCreateAPIView):
         order_serializer.is_valid(raise_exception=True)
         order = order_serializer.save()
         
-        order_items = []
         for cart_item in cart_items:
             order_item_data = {
                 'order': order.id,
@@ -252,13 +251,9 @@ class OrderView(generics.ListCreateAPIView):
             order_item_serializer = OrderItemSerializer(data=order_item_data)
             order_item_serializer.is_valid(raise_exception=True)
             order_item_serializer.save()
-            order_items.append(order_item_serializer.data)
 
         # Step 4: Delete cart items
         cart_items.delete()
 
-        response_data = {
-            'order': order_serializer.data,
-            'order_items': order_items
-        }
-        return Response(response_data, status=status.HTTP_201_CREATED)
+        return Response(order_serializer.data, status=status.HTTP_201_CREATED)
+
