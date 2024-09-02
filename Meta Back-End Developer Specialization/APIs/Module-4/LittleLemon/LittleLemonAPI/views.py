@@ -1,11 +1,16 @@
-from rest_framework import permissions, viewsets, generics, status
+from django.shortcuts import render
+
+# Create your views here.
+from rest_framework import permissions, generics, status
 from .models import MenuItem, Category, Cart, OrderItem, Order
-from .serializers import MenuItemSerializer, CategorySerializer, UserSerializer,CartSerializer
+from .serializers import MenuItemSerializer, CategorySerializer, UserSerializer,CartSerializer, OrderItemSerializer, OrderSerializer
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from rest_framework.decorators import permission_classes, throttle_classes
+from rest_framework.decorators import throttle_classes
 from django.contrib.auth.models import User, Group
+from django.utils import timezone
+from rest_framework.exceptions import PermissionDenied, NotFound
+
 
 class IsManager(permissions.BasePermission):
     def has_permission(self, request,view):
@@ -24,11 +29,27 @@ class CategoriesView(generics.ListCreateAPIView):
             return [permission() for permission in permission_classes]
 
 class MenuItemsView(generics.ListCreateAPIView):
-    queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
     ordering_fields=['price']
-    search_fields=['category__title']
+    search_fields=['title']
+    
+    def get_queryset(self):
+        queryset = MenuItem.objects.all()
 
+        category = self.request.query_params.get('category', None)
+        if category:
+            queryset = queryset.filter(category__title__icontains=category)
+
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(title__icontains=search)
+
+        ordering = self.request.query_params.get('ordering', None)
+        if ordering:
+            queryset = queryset.order_by(ordering)
+        
+        return queryset
+    
     def get_permissions(self):
         if self.request.method == 'GET':
             return []
@@ -100,18 +121,144 @@ class CartView(generics.ListCreateAPIView):
     def delete(self, request, *args, **kwargs):
         Cart.objects.all().filter(user=self.request.user).delete()
         return Response({'detail': 'All items removed from cart'}, status=status.HTTP_204_NO_CONTENT)
+    
 
-'''
-class SingleOrderView(generics.RetrieveUpdateAPIView):
-    queryset = Order.objects.all()
+class SingleOrderView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_object(self):
+        current_user = self.request.user
+        try:
+            order = Order.objects.get(id=self.kwargs['pk'])
+        except Order.DoesNotExist:
+            raise NotFound("Order does not exist.")
+        
+
+        if current_user.groups.filter(name='Manager').exists():
+            return order
+        elif current_user == order.user :
+            return order
+        elif current_user.groups.filter(name='DeliveryCrew').exists() and order.delivery_crew == current_user:
+            return order
+        else:
+            raise PermissionDenied("You do not have permission to access this order.")
+        
     def update(self, request, *args, **kwargs):
-        if (
-            self.request.user.groups.count() == 0
-        ):  # Normal user, not belonging to any group = Customer
-            return Response("Not Ok")
-        else:  # everyone else - Super Admin, Manager and Delivery Crew
-            return super().update(request, *args, **kwargs)
-'''
+        try:
+            order = Order.objects.get(id=self.kwargs['pk'])
+        except Order.DoesNotExist:
+            raise NotFound("Order does not exist.")
+        current_user = self.request.user
+
+        if current_user.groups.filter(name='Manager').exists():
+            serializer = self.get_serializer(order, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        else:
+            raise PermissionDenied("You do not have permission to update this order.")
+    
+    def partial_update(self, request, *args, **kwargs):
+        try:
+            order = Order.objects.get(id=self.kwargs['pk'])
+        except Order.DoesNotExist:
+            raise NotFound("Order does not exist.")
+        
+        current_user = self.request.user
+
+        if current_user.groups.filter(name='Manager').exists():
+            # Manager can update the order
+            if 'status' in request.data:
+                status_value = request.data['status']
+                if status_value == 1 and order.delivery_crew is None :
+                    raise PermissionDenied("Order cannot be marked as delivered without an assigned delivery crew.")
+
+            serializer = self.get_serializer(order, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        
+        elif current_user.groups.filter(name='DeliveryCrew').exists():
+            # Delivery crew can only update the status
+            if 'status' in request.data:
+                status_value = request.data['status']
+                if status_value == 1 and order.delivery_crew is None:
+                    raise PermissionDenied("Order cannot be marked as delivered without an assigned delivery crew.")
+
+                serializer = self.get_serializer(order, data=request.data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                self.perform_update(serializer)
+                return Response(serializer.data)
+            else:
+                raise PermissionDenied("You can only update the status of the order.")
+        else:
+            raise PermissionDenied("You do not have permission to update this order.")
+        
+    def destroy(self, request, *args, **kwargs):
+        current_user = self.request.user
+        try:
+            order = Order.objects.get(id=self.kwargs['pk'])
+        except Order.DoesNotExist:
+            raise NotFound("Order does not exist.")
+        
+        if current_user.groups.filter(name='Manager').exists():
+            self.perform_destroy(order)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            raise PermissionDenied("You do not have permission to delete this order.")
+
+class OrderView(generics.ListCreateAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.groups.filter(name='Manager').exists():
+            return Order.objects.all()
+        elif self.request.user.groups.filter(name='DeliveryCrew').exists():
+            return Order.objects.filter(delivery_crew=self.request.user)
+        else:
+            return Order.objects.filter(user=self.request.user)
+    
+    def get(self, request, *args, **kwargs):
+        orders = self.get_queryset()
+        order_serializer = self.get_serializer(orders, many=True)
+        return Response(order_serializer.data)
+        
+    def create(self, request, *args, **kwargs):
+        current_user = request.user
+
+        cart_items = Cart.objects.filter(user=current_user)
+        if cart_items.count() == 0:
+            return Response({"Message:": "No item in cart"})
+
+        total_price = sum(item.price for item in cart_items)
+
+        # create order
+        order_data = {'user' : current_user.id,'total': total_price, 'date': timezone.now().date()}
+        order_serializer = self.get_serializer(data=order_data)
+        order_serializer.is_valid(raise_exception=True)
+        order = order_serializer.save()
+        
+        order_items = []
+        for cart_item in cart_items:
+            order_item_data = {
+                'order': order.id,
+                'menuitem': cart_item.menuitem.id,
+                'quantity': cart_item.quantity,
+                'unit_price': cart_item.unit_price,
+                'price': cart_item.price
+            }
+            order_item_serializer = OrderItemSerializer(data=order_item_data)
+            order_item_serializer.is_valid(raise_exception=True)
+            order_item_serializer.save()
+            order_items.append(order_item_serializer.data)
+
+        # Step 4: Delete cart items
+        cart_items.delete()
+
+        response_data = {
+            'order': order_serializer.data,
+            'order_items': order_items
+        }
+        return Response(response_data, status=status.HTTP_201_CREATED)
